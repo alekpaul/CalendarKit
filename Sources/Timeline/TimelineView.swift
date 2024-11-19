@@ -394,6 +394,8 @@ public final class TimelineView: UIView {
     private func layoutEvents() {
         if eventViews.isEmpty { return }
 
+        let visualGap: CGFloat = 1.0 // Set the desired visual gap between events
+
         for (idx, attributes) in regularLayoutAttributes.enumerated() {
             let descriptor = attributes.descriptor
             let eventView = eventViews[idx]
@@ -406,11 +408,14 @@ public final class TimelineView: UIView {
                 x = attributes.frame.minX
             }
 
-            eventView.frame = CGRect(x: x,
-                                     y: attributes.frame.minY,
-                                     width: attributes.frame.width - style.eventGap,
-                                     height: attributes.frame.height - style.eventGap)
-            eventView.updateWithDescriptor(event: descriptor)
+             // Apply the visual gap by adding it to the 'y' position and reducing the height slightly
+        eventView.frame = CGRect(
+        x: x,
+        y: attributes.frame.minY + visualGap * CGFloat(idx),  // Add gap between consecutive events
+        width: attributes.frame.width - style.eventGap,
+        height: attributes.frame.height - style.eventGap - visualGap  // Slightly reduce height to account for gap
+        )
+        eventView.updateWithDescriptor(event: descriptor)
         }
     }
 
@@ -469,10 +474,12 @@ public final class TimelineView: UIView {
                 }
             } else {
                 let lastEvent = overlappingEvents.last!
-                if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (longestEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) ||
-                    (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) && (lastEvent.descriptor.dateInterval.end != event.descriptor.dateInterval.start || style.eventGap <= 0.0)) {
-                    overlappingEvents.append(event)
-                    continue
+                if (longestEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) &&
+                longestEvent.descriptor.dateInterval.end > event.descriptor.dateInterval.start && (style.eventGap <= 0.0)) ||
+                (lastEvent.descriptor.dateInterval.intersects(event.descriptor.dateInterval) &&
+                lastEvent.descriptor.dateInterval.end > event.descriptor.dateInterval.start && (style.eventGap <= 0.0)) {
+                overlappingEvents.append(event)
+                continue
                 }
             }
             groupsOfEvents.append(overlappingEvents)
